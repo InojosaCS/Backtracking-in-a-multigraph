@@ -1,9 +1,6 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.NoSuchElementException;
-import java.util.Scanner;
 import java.io.IOException;
-import java.io.*; 
 import java.util.*; 
 
 /**
@@ -14,11 +11,13 @@ import java.util.*;
 public class PlanearTrasbordos {
 	
 	
-	public static String[] ciudades;
-	private static int nroLineas;
-	private static int current;
-	private static int minimo;
-	private static int[][] tablaVisitados = new int[nroLineas+1][ciudades.length];
+	public static String[] lineasDeMetro;
+	public static int nroLineas;
+	public static int current;
+	public static int minimo = Integer.MAX_VALUE;
+	public static int nroEstaciones;
+	//static int[][] tablaVisitados;
+	public static String caminoCompleto;
 	
     /**
      * Llama a las otras funciones para cargar eLa Graformacion y hacer el backtracking
@@ -40,6 +39,7 @@ public class PlanearTrasbordos {
 				grafo = new GrafoDirigido();
 			} else {
 				System.out.println("La primera linea del archivo debe contener N o D");
+				Lector.close();
 				return;
 			}
 			
@@ -48,10 +48,15 @@ public class PlanearTrasbordos {
 			MapeoEstaciones(args[0], args[1]);
 			grafo.cargarGrafo(args[0]);
 			CambiarTexto b = new CambiarTexto();
-			b.RecuperarArchivo(args[0], ciudades);
+			b.RecuperarArchivo(args[0], lineasDeMetro);
 			
 			// Busca los vertices iniciales y finales
 			Collection<Vertice> vertices = grafo.vertices();
+			nroEstaciones = vertices.size();
+			System.out.println(nroEstaciones);
+			System.out.println(nroLineas);
+			
+			
 			Vertice verticeInicio = new Vertice (-1, "", -1, -1, -1);
 			Vertice verticeFin = new Vertice (-1, "", -1, -1, -1);
 			
@@ -65,12 +70,10 @@ public class PlanearTrasbordos {
 			System.out.println(verticeInicio.getId() + " " + verticeInicio.getNombre() + " " + verticeInicio.getPeso() + " ");
 			System.out.println(verticeFin.getId() + " " + verticeFin.getNombre() + " " + verticeFin.getPeso() + " ");
 			
-			crearTablaVisitados((GrafoNoDirigido) grafo);
-			
-			if(grafo instanceof GrafoNoDirigido) {
-				backtracking((GrafoNoDirigido)grafo, verticeInicio, verticeFin);
-			}
-			
+			//if(grafo instanceof GrafoNoDirigido) {
+		
+			String epale = backtracking((GrafoNoDirigido)grafo, verticeInicio, verticeFin);
+
             
         } catch (IOException e) {
             System.out.println("Error leyendo el archivo: " + e.getMessage());
@@ -83,7 +86,7 @@ public class PlanearTrasbordos {
 	
 	private static boolean MapeoEstaciones(String archivo, String archivo1) {
 		try {
-			// Leer las ciudades
+			// Leer las lineasDeMetro
 	        BufferedReader Lector = new BufferedReader(new FileReader(archivo1));
 	        nroLineas = 0;
 
@@ -97,17 +100,17 @@ public class PlanearTrasbordos {
 	        }
 	        Lector.close();
 	        
-	        // Cambiar las ciudades
+	        // Cambiar las lineasDeMetro
 			BufferedReader Lector1 = new BufferedReader(new FileReader(archivo1));
-			ciudades = new String[nroLineas];
+			lineasDeMetro = new String[nroLineas];
 			CambiarTexto f = new CambiarTexto();
 			
 			for(int i = 0; i < nroLineas; i++) {
 				String[] helper = Lector1.readLine().split("\\s");
-				ciudades[i] = helper[0];
+				lineasDeMetro[i] = helper[0];
 				f.modifyFile(archivo, helper[0], Integer.toString(i));
 			}
-			Lector.close();
+			Lector1.close();
 		
 		} catch(Exception e) {
 			return false;
@@ -115,94 +118,241 @@ public class PlanearTrasbordos {
 		return true;
 	}
 	
-	private static void backtracking(GrafoNoDirigido grafo, Vertice inicio, Vertice fin) { 
+	private static String backtracking(GrafoNoDirigido grafo, Vertice inicio, Vertice fin) { 
 		
+		// Declaracion de variables
 		Set<Vertice> adyacentes = grafo.adyacentes(inicio.getId());
 		int current=0;
-		int minimo=Integer.MAX_VALUE;
+		//int minimo=Integer.MAX_VALUE;
+		String caminoActual = inicio.getNombre();
 		
+		// Se crea la tabla de visitados
+		int k = 0;
+		int [][] tablaVisitados = new int[nroLineas+2][nroEstaciones];
+		for(Vertice vertice: grafo.vertices()) {
+			tablaVisitados [0][k] = vertice.getId();
+			// System.out.print(vertice.getId()+" "+tablaVisitados[0][k]);
+			for(int j=1; j<nroLineas+1; j++) {
+				tablaVisitados[j][k] = 0;
+				// System.out.print(" "+tablaVisitados[j][k]);
+			}
+			//System.out.println();
+			k++;
+		}
+		
+		
+		// Se itera sobre sobre los vecinos del nodo inicial
 		for(Vertice verticeAdj: adyacentes) {			
-			System.out.println(verticeAdj.getId() + " " + verticeAdj.getNombre() + " " + verticeAdj.getPeso() + " ");
-			
+			//System.out.println(verticeAdj.getId() + " " + verticeAdj.getNombre() + " " + verticeAdj.getPeso() + " ");
+			// Se busca cuales lines existen entre los nodos y se busca un camino entre ellos
 			for(int i=0; i<nroLineas; i++) {
-				boolean [] visitado = new boolean[ciudades.length];
-				
-				if (grafo.estaArista(inicio, verticeAdj, i) ) {
+				int indiceValido = visitaValida((GrafoNoDirigido) grafo, verticeAdj, i, tablaVisitados);
+				if (grafo.estaArista(inicio, verticeAdj, i) && indiceValido!=-1) {
+					tablaVisitados[i+1][indiceValido] = 1;
 					Arista arista = new Arista(inicio, verticeAdj, i, 0);
 					arista = grafo.obtenerArista(inicio, verticeAdj, i);
-					BTRecursivo((GrafoNoDirigido) grafo, arista, current, minimo, fin.getNombre());
+					BTRecursivo((GrafoNoDirigido) grafo, arista, current, fin.getNombre(), caminoActual, tablaVisitados);
 				}
 			}
 		}
-		System.out.println(minimo);
-		
+		return caminoActual;
 		
 	}
 	
-	private static void BTRecursivo(GrafoNoDirigido grafo, Arista arista, int current, int minimo, String destino) { 
+	static void BTRecursivo(GrafoNoDirigido grafo, Arista arista, int current, String destino, String caminoActual, int [][] tablaVisitados) { 
 		
+		// Declaracion de variables
 		Vertice inicio = arista.getExtremo1();
-		Vertice fin = arista.getExtremo2();
+		Vertice actual = arista.getExtremo2();
 		int tipo = arista.getTipo();
+		// System.out.println("Empieza btr ");
+		System.out.println(inicio.getId()+" "+inicio.getNombre()+" "+actual.getId()+" "+actual.getNombre()+" "+tipo + " " + minimo);
 		
-		System.out.println(inicio.getNombre()+" "+fin.getNombre()+" "+tipo);
+		Set<Vertice> adyacentes = grafo.adyacentes(actual.getId());
 		
-		Set<Vertice> adyacentes = grafo.adyacentes(fin.getId());
-
-		if( inicio.getNombre().contentEquals(destino) ) {
+		caminoActual += " " + lineasDeMetro[tipo] + " -> " + actual.getNombre() + " " + Integer.toString(actual.getId());
+		
+		// si llega al destino entonces acaba el backtracking y asigna los nuevos valores
+		if( actual.getNombre().contentEquals(destino) ) {
 			minimo = current < minimo ? current : minimo;
-			return;
-		}if(adyacentes.size() == 0 || current >= minimo) {
+			caminoCompleto = caminoActual;
+			System.out.println(caminoCompleto);
+			System.out.println(minimo);
 			return;
 		}
+		
+		// Si llega a un nodo sin vecinos entonces acaba el backtracking en esa rama
+		
 		
 		
 		for(Vertice verticeAdj: adyacentes) {
-			for(int i=0; i<nroLineas; i++) {
-				if (grafo.estaArista(fin, verticeAdj, tipo)) {
-					Arista aristaAux = new Arista(fin, verticeAdj, tipo, 0);
-					aristaAux = grafo.obtenerArista(fin, verticeAdj, tipo);
-					BTRecursivo((GrafoNoDirigido) grafo, aristaAux, current, minimo, destino);
+			// Se chequea si exite una arista del mismo tipo de linea y si 
+			// es valido visitarla (esto es, que no haya sido visitado ese nodo por la misma linea)
+			int indiceValido = visitaValida((GrafoNoDirigido) grafo, verticeAdj, tipo, tablaVisitados);
+			if (grafo.estaArista(actual, verticeAdj, tipo) && indiceValido!=-1 && verticeAdj.getNombre() != inicio.getNombre()) {
+				tablaVisitados[tipo+1][indiceValido] = 1;
+				Arista aristaAux = new Arista(actual, verticeAdj, tipo, 0);
+				aristaAux = grafo.obtenerArista(actual, verticeAdj, tipo);
+				BTRecursivo((GrafoNoDirigido) grafo, aristaAux, current, destino, caminoActual, tablaVisitados);
+				break;
 				}
-			}
 		}
+		System.out.println("Fin tipo " + tipo);
 		
 		for(Vertice verticeAdj: adyacentes) {
+			// Se itera sobre todos los adyacentes del nodo actual 
 			for(int i=0; i<nroLineas; i++) {
-				if (grafo.estaArista(fin, verticeAdj, i)) {
-					Arista aristaAux = new Arista(fin, verticeAdj, i, 0);
-					aristaAux = grafo.obtenerArista(fin, verticeAdj, i);
-					BTRecursivo((GrafoNoDirigido) grafo, aristaAux, current+1, minimo, destino);
+				// Se chequea si exite una arista por cualquier tipo de linea y si 
+				// es valido visitarla (esto es, que no haya sido visitado ese nodo por la misma linea)
+				//System.out.println(actual.getNombre()+" llegue aqui " + tipo);
+				int indiceValido = visitaValida((GrafoNoDirigido) grafo, verticeAdj, i, tablaVisitados);
+				if (grafo.estaArista(actual, verticeAdj, i) && current + 1 < minimo && indiceValido!=-1 && verticeAdj.getNombre() != inicio.getNombre()) {
+					tablaVisitados[i+1][indiceValido] = 1;
+					Arista aristaAux = new Arista(actual, verticeAdj, i, 0);
+					aristaAux = grafo.obtenerArista(actual, verticeAdj, i);
+					BTRecursivo((GrafoNoDirigido) grafo, aristaAux, current+1, destino, caminoActual, tablaVisitados);
 				}
 			}
 		}
+
+		System.out.println("Fondo " + actual.getId());
+		return;
 	}
 	
-	private static void crearTablaVisitados(GrafoNoDirigido grafo) {
-		
-		int i = 0;
-		
-		for(Vertice vertice: grafo.vertices()) {
-			tablaVisitados [0][i] = vertice.getId();
-			i++;
-			
-			for(int j=1; j<nroLineas+1; j++) {
-				tablaVisitados[i][j] = 0;
-			}
-		}
-		
-	}
+
 	
-	private static boolean visitado(GrafoNoDirigido grafo, Vertice v, int tipo) {
+	static private int visitaValida(GrafoNoDirigido grafo, Vertice v, int tipo, int [][] tablaVisitados) {
 		int i=0;
+		int ans = -1;
+		boolean helper = false;
 		
 		for(Vertice vertice: grafo.vertices()) {
-			if(vertice.getNombre().contentEquals(v.getNombre())) {
+			if(vertice.getId() == v.getId()) {
+				helper = tablaVisitados[tipo+1][i]==0;
 				break;
 			}
 			i++;
 		}
-		return tablaVisitados[i][tipo+1]==1;
+		
+		return ans = helper ? i : ans;
 	}
 
+	private static String backtracking(GrafoDirigido grafo, Vertice inicio, Vertice fin) { 
+		
+		// Declaracion de variables
+		Set<Vertice> sucesores = grafo.sucesores(inicio.getId());
+		int current=0;
+		//int minimo=Integer.MAX_VALUE;
+		String caminoActual = inicio.getNombre();
+		
+		// Se crea la tabla de visitados
+		int k = 0;
+		int [][] tablaVisitados = new int[nroLineas+2][nroEstaciones];
+		for(Vertice vertice: grafo.vertices()) {
+			tablaVisitados [0][k] = vertice.getId();
+			// System.out.print(vertice.getId()+" "+tablaVisitados[0][k]);
+			for(int j=1; j<nroLineas+1; j++) {
+				tablaVisitados[j][k] = 0;
+				// System.out.print(" "+tablaVisitados[j][k]);
+			}
+			//System.out.println();
+			k++;
+		}
+		
+		
+		// Se itera sobre sobre los vecinos del nodo inicial
+		for(Vertice verticeAdj: sucesores) {			
+			//System.out.println(verticeAdj.getId() + " " + verticeAdj.getNombre() + " " + verticeAdj.getPeso() + " ");
+			// Se busca cuales lines existen entre los nodos y se busca un camino entre ellos
+			for(int i=0; i<nroLineas; i++) {
+				int indiceValido = visitaValida((GrafoDirigido) grafo, verticeAdj, i, tablaVisitados);
+				if (grafo.estaArco(inicio, verticeAdj, i) && indiceValido!=-1) {
+					tablaVisitados[i+1][indiceValido] = 1;
+					Arco arco = new Arco(inicio, verticeAdj, i, 0);
+					arco = grafo.obtenerArco(inicio, verticeAdj, i);
+					BTRecursivo((GrafoDirigido) grafo, arco, current, fin.getNombre(), caminoActual, tablaVisitados);
+				}
+			}
+		}
+		return caminoActual;
+		
+	}
+	
+	static void BTRecursivo(GrafoDirigido grafo, Arco arco, int current, String destino, String caminoActual, int [][] tablaVisitados) { 
+		
+		// Declaracion de variables
+		Vertice inicio = arco.getExtremoInicial();
+		Vertice actual = arco.getExtremoFinal();
+		int tipo = arco.getTipo();
+		// System.out.println("Empieza btr ");
+		System.out.println(inicio.getId()+" "+inicio.getNombre()+" "+actual.getId()+" "+actual.getNombre()+" "+tipo + " " + minimo);
+		
+		Set<Vertice> sucesores = grafo.sucesores(actual.getId());
+		
+		caminoActual += " " + lineasDeMetro[tipo] + " -> " + actual.getNombre() + " " + Integer.toString(actual.getId());
+		
+		// si llega al destino entonces acaba el backtracking y asigna los nuevos valores
+		if( actual.getNombre().contentEquals(destino) ) {
+			minimo = current < minimo ? current : minimo;
+			caminoCompleto = caminoActual;
+			System.out.println(caminoCompleto);
+			System.out.println(minimo);
+			return;
+		}
+		
+		// Si llega a un nodo sin vecinos entonces acaba el backtracking en esa rama
+		
+		
+		
+		for(Vertice verticeAdj: sucesores) {
+			// Se chequea si exite una arco del mismo tipo de linea y si 
+			// es valido visitarla (esto es, que no haya sido visitado ese nodo por la misma linea)
+			int indiceValido = visitaValida((GrafoDirigido) grafo, verticeAdj, tipo, tablaVisitados);
+			if (grafo.estaArco(actual, verticeAdj, tipo) && indiceValido!=-1 && verticeAdj.getNombre() != inicio.getNombre()) {
+				tablaVisitados[tipo+1][indiceValido] = 1;
+				Arco arcoAux = new Arco(actual, verticeAdj, tipo, 0);
+				arcoAux = grafo.obtenerArco(actual, verticeAdj, tipo);
+				BTRecursivo((GrafoDirigido) grafo, arcoAux, current, destino, caminoActual, tablaVisitados);
+				break;
+				}
+		}
+		System.out.println("Fin tipo " + tipo);
+		
+		for(Vertice verticeAdj: sucesores) {
+			// Se itera sobre todos los sucesores del nodo actual 
+			for(int i=0; i<nroLineas; i++) {
+				// Se chequea si exite una arco por cualquier tipo de linea y si 
+				// es valido visitarla (esto es, que no haya sido visitado ese nodo por la misma linea)
+				//System.out.println(actual.getNombre()+" llegue aqui " + tipo);
+				int indiceValido = visitaValida((GrafoDirigido) grafo, verticeAdj, i, tablaVisitados);
+				if (grafo.estaArco(actual, verticeAdj, i) && current + 1 < minimo && indiceValido!=-1 && verticeAdj.getNombre() != inicio.getNombre()) {
+					tablaVisitados[i+1][indiceValido] = 1;
+					Arco arcoAux = new Arco(actual, verticeAdj, i, 0);
+					arcoAux = grafo.obtenerArco(actual, verticeAdj, i);
+					BTRecursivo((GrafoDirigido) grafo, arcoAux, current+1, destino, caminoActual, tablaVisitados);
+				}
+			}
+		}
+
+		System.out.println("Fondo " + actual.getId());
+		return;
+	}
+	
+
+	
+	static private int visitaValida(GrafoDirigido grafo, Vertice v, int tipo, int [][] tablaVisitados) {
+		int i=0;
+		int ans = -1;
+		boolean helper = false;
+		
+		for(Vertice vertice: grafo.vertices()) {
+			if(vertice.getId() == v.getId()) {
+				helper = tablaVisitados[tipo+1][i]==0;
+				break;
+			}
+			i++;
+		}
+		
+		return ans = helper ? i : ans;
+	}
 }
