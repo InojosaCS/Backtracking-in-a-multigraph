@@ -1,11 +1,8 @@
 /**
- * 
- */
-
-/**
  * @author Alejandro Salazar
  * @author Cristian Inojosa
  */
+
 public abstract class Lado
 {	
 	/**
@@ -27,6 +24,23 @@ public abstract class Lado
 	 * Peso del lado
 	 */
 	protected double peso;
+	
+	/**
+	 * Obtiene el Vertice en el cual el lado incide (inicial si es dirigido)
+	 * @return Vertice
+	 */
+	public Vertice getInicio()
+	{
+		return this.a;
+	}
+	/**
+	 * Obtiene el Vertice en el cual el lado incide (inicial si es dirigido)
+	 * @return Vertice
+	 */
+	public Vertice getFin()
+	{
+		return this.b;
+	}
 	
 	/**
 	 * Obtiene el peso del lado
@@ -57,7 +71,7 @@ public abstract class Lado
 	}
 	
 	/**
-	 * Obtiene una representación del lado de tipo String
+	 * Obtiene una representaciÃ³n del lado de tipo String
 	 * @return String representacion del lado
 	 */
 	abstract public String toString();
