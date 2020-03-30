@@ -9,17 +9,20 @@ import java.util.*;
  */
 
 public class PlanearTrasbordos {
-	
+	/**
+	 * Variables globales, sus nombres describe el uso de cada uno
+	 */
 	public static String[] lineasDeMetro;
-	public static int nroLineas;
-	public static int minimo = Integer.MAX_VALUE;
-	public static int nroEstaciones;
+	public static int nroLineas, nroEstaciones, minimo = Integer.MAX_VALUE;
 	public static String caminoCompleto;
 	public static HashMap<Integer, Integer> hashing = new HashMap <Integer, Integer>();
-	public static Vertice verticeInicio;
-	public static Vertice verticeFin;
-    /**
+	public static Vertice verticeInicio, verticeFin;
+    
+	/**
      * Llama a las otras funciones para cargar eLa Graformacion y hacer el backtracking
+     * (De 18 casos de prueba, generados por los autores, el tiempo maximo esperado por 
+     * el algoritmo es alredor de dos minutos en dos casos, en los otros 16 fue instantaneo;
+     * probado en una laptop con Windows10, procesador Intel Core i5-8265U @ 1.60GHz 1.80GHz y 8gb RAM)
      * @param args Archivo con la nformacion que el usuario proporciona
      */
 	public static void main(String[] args) {
@@ -46,11 +49,11 @@ public class PlanearTrasbordos {
 			}
 			Lector.close(); 
 			
-			LeerEstaciones(args[0]);
+			leerEstaciones(args[0]);
 			grafo.cargarGrafo(args[0]);
 			grafoInducido = grafo;
 			CambiarTexto b = new CambiarTexto();
-			b.RecuperarArchivo(args[0], lineasDeMetro);
+			b.recuperarArchivo(args[0], lineasDeMetro);
 			
 			// Busca los vertices iniciales y finales
 			Collection<Vertice> vertices = grafo.vertices();
@@ -73,30 +76,61 @@ public class PlanearTrasbordos {
 				System.out.println("<pIncio> o <pFin> no pertence al conjunto de estaciones en <mapa>, chequee que esten escritas igual");
 				return;
 			}
+		
+			System.out.println("El programa termina cuando aparezca el mensaje de finalizado para cada grafo, por favor espere \n");
 			
-			System.out.println(nroEstaciones);
-			System.out.println("El programa termina cuando aparezca el mensaje de finalizado, por favor espere");
+			String respuesta1, respuesta2;
+			
 			if(grafo instanceof GrafoNoDirigido) {
-				backtracking((GrafoNoDirigido)grafo, verticeInicio, verticeFin);
-				InducirGrafo(args[1], (GrafoNoDirigido) grafoInducido);
+				respuesta2 = backtracking((GrafoNoDirigido)grafo, verticeInicio, verticeFin);
+				inducirGrafo(args[1], (GrafoNoDirigido) grafoInducido);
+				minimo = Integer.MAX_VALUE;
+				respuesta1 = backtracking((GrafoNoDirigido)grafo, verticeInicio, verticeFin);
         	}else {
-				backtracking((GrafoDirigido)grafo, verticeInicio, verticeFin);
-				InducirGrafo(args[1], (GrafoDirigido) grafoInducido);
+        		respuesta2 = backtracking((GrafoDirigido)grafo, verticeInicio, verticeFin);
+				inducirGrafo(args[1], (GrafoDirigido) grafoInducido);
+				minimo = Integer.MAX_VALUE;
+				respuesta1 = backtracking((GrafoDirigido)grafoInducido, verticeInicio, verticeFin);
         	}
-			System.out.println("#### Finalizado ####");
-			String ans;
-			minimo = Integer.MAX_VALUE;
-
-			if(grafoInducido instanceof GrafoNoDirigido) 
-				ans = backtracking((GrafoNoDirigido)grafo, verticeInicio, verticeFin);
-			else
-				ans = backtracking((GrafoDirigido)grafoInducido, verticeInicio, verticeFin);
 			
-			System.out.println(ans);
-	        
-			if(ans.contentEquals("-1")) System.out.println("No hay camino");
-			System.out.println("#### Finalizado ####");
-        
+			if(respuesta1.contentEquals("-1"))  
+				System.out.println("No hay camino en el grafo inducido entre " + verticeInicio.getNombre() + " y " + verticeFin.getNombre()); 
+			else {
+				String[] Auxiliar = respuesta1.split("\\s+");
+				String numeroMinimoTrasbordos = Auxiliar[0], ultimaEstacionCambiada = Auxiliar[1] + " " + Auxiliar[2], ultimaLineaCambiada = Auxiliar[3];
+				System.out.println("Cuando el grafo esta inducido");
+				for(i=3; i<Auxiliar.length; i+=3) {
+					if(!Auxiliar[i].contentEquals(ultimaLineaCambiada)) {
+						System.out.println("Tome la linea " + ultimaLineaCambiada + " desde " + ultimaEstacionCambiada + " hasta " + Auxiliar[i-2]+" "+ Auxiliar[i-1]);
+						ultimaEstacionCambiada = Auxiliar[i-2]+" "+ Auxiliar[i-1];
+						ultimaLineaCambiada = Auxiliar[i];
+					}
+				}
+				System.out.println("Tome la linea " + ultimaLineaCambiada + " desde " + ultimaEstacionCambiada + " hasta " +  verticeFin.getId() + " " +verticeFin.getNombre());
+				System.out.println("Trasbordos totales: " + numeroMinimoTrasbordos);
+			}
+			
+			System.out.println("\n#### Finalizado trayecto Grafo Inducido #### \n");
+			
+			if(respuesta2.contentEquals("-1"))  
+				System.out.println("No hay camino en el grafo " + verticeInicio.getNombre() + " y " + verticeFin.getNombre()); 
+			else {
+				String[] Auxiliar = respuesta2.split("\\s+");
+				String numeroMinimoTrasbordos = Auxiliar[0], ultimaEstacionCambiada = Auxiliar[1] + " " + Auxiliar[2], ultimaLineaCambiada = Auxiliar[3];
+				System.out.println("Cuando todas las lineas estan operativas");
+				for(i=3; i<Auxiliar.length; i+=3) {
+					if(!Auxiliar[i].contentEquals(ultimaLineaCambiada)) {
+						System.out.println("Tome la linea " + ultimaLineaCambiada + " desde " + ultimaEstacionCambiada + " hasta " + Auxiliar[i-2]+" "+Auxiliar[i-1]);
+						ultimaEstacionCambiada = Auxiliar[i-2]+" "+Auxiliar[i-1];
+						ultimaLineaCambiada = Auxiliar[i];
+					}
+				}
+				System.out.println("Tome la linea " + ultimaLineaCambiada + " desde " + ultimaEstacionCambiada + " hasta " + verticeFin.getId() + " " +verticeFin.getNombre());
+				System.out.println("Trasbordos totales: " + numeroMinimoTrasbordos);
+			}
+			
+			System.out.println("\n#### Finalizado trayecto Grafo Completo #### \n");
+			
         } catch (IOException e) {
             System.out.println("Error leyendo el archivo: " + e.getMessage());
         } catch (NumberFormatException e) {
@@ -106,7 +140,13 @@ public class PlanearTrasbordos {
         }
 	}
 
-	private static boolean LeerEstaciones(String archivo) {
+	/**
+     * Lee cuales y cuantas lineas de metro hay en el archivo proporcionado por el usuario y mapea los nombres de 
+     * las lineas de metro con un entero, modifica el archivo cambiando los nombre de las lineas por los entero 
+     * recien mapeados (Luego se devuelve el archivo a su estado original)
+     * @param Archivo Archivo con la nformacion que el usuario proporciona
+     */
+	private static boolean leerEstaciones(String archivo) {
 		try {
 			// Leer las lineasDeMetro y contar cuantas lineas de metro hay
 	        BufferedReader Lector = new BufferedReader(new FileReader(archivo));
@@ -140,7 +180,7 @@ public class PlanearTrasbordos {
             
             for(int i=0; i<lineasDeMetro.length; i++) {
             	lineasDeMetro[i] = ciudadesa.get(i);
-				f.modifyFile(archivo, "\\b"+lineasDeMetro[i]+"\\b", Integer.toString(i));
+				f.modificarArchivo(archivo, "\\b"+lineasDeMetro[i]+"\\b", Integer.toString(i));
             }           
 	        Lector.close();
 		} catch(Exception e) {
@@ -148,8 +188,16 @@ public class PlanearTrasbordos {
 		}
 		return true;
 	}
-
-	private static boolean InducirGrafo(String archivo1, GrafoDirigido grafoInducido) {
+	
+	/**
+     * Lee cuales lineas de metro se conservaran, luego itera sobre los lados de una copia grafo completo y los que no sean de esas lineas
+     * son eliminados, por efectos practicos no se eliminan los nodos para evitar lanzar una excepcion en caso que el pInicio o pfin
+     * este en uno de ellos y se pueda usar el mismo algoritmo para el grafo y el grafo inducido. 
+     * @param Archivo1 Archivo con la informacion sobre que lineas se conservarn
+     * @param grafoInducido Es una grafo igual al grafo completo; al cual se le eliminaran los Arcos que no sean de la lineas validas
+     * @return True si lee la informacion correctamente, falso si no
+     */
+	private static boolean inducirGrafo(String archivo1, GrafoDirigido grafoInducido) {
 		try {
 			// Leer las lineasDeMetro y contar cuantas lineas de metro hay
 	        BufferedReader Lector = new BufferedReader(new FileReader(archivo1));
@@ -179,23 +227,25 @@ public class PlanearTrasbordos {
 	        	
 	        }
 	        
-	        for(Vertice vertice: grafoInducido.vertices()) {
-	        //	if(grafoInducido.grado(vertice.getId())==0) grafoInducido.eliminarVertice(vertice.getId());
-	        }
-	        System.out.println(grafoInducido.numeroDeVertices());
-	        System.out.println(grafoInducido.numeroDeLados());
-	        
 		} catch(Exception e) {
 			return false;
 		}
 		return true;
 	}
 	
+	/**
+     * Este funcion busca los sucesores del vertice pInicio, y llama a la funcion BTRecursivo sobre ellos, y marca el vertice inical 
+     * como visitado
+     * @param GrafoD grafo
+     * @param Vertice inicio
+     * @param Vertice Fin
+     * @return String caminoCompleto : Es el camino con todas las estaciones y lineas
+     */
 	private static String backtracking(GrafoDirigido grafo, Vertice inicio, Vertice fin) { 
 		// Declaracion de variables
 		Set<Vertice> sucesores = grafo.sucesores(verticeInicio.getId());
 		int current=0;
-		String caminoActual = inicio.getNombre();
+		String caminoActual = inicio.getId() + " "+ inicio.getNombre();
 		boolean [] visitados = new boolean [nroEstaciones];
 		visitados[hashing.get(verticeInicio.getId())] = true;
 		caminoCompleto = "-1";
@@ -216,6 +266,17 @@ public class PlanearTrasbordos {
 		return caminoCompleto;
 	}
 	
+	/**
+     * Esta funcion recorre el grafo como lo recorreria el algoritmo DFS, primero busca todos los sucesores con la misma linea de metro,
+     * y ve por esa rama recursivamente, lleva una variable llamada current, si current es mayor o igual al minimo actual, entonces corta
+     * recursion pues buscamos el menor numero de trasbordos, si se llega a un punto donde no hay mas sucesores no visitados de la misma linea 
+     * entonces busca por las otras lineas, y se le suma 1 a current. Si se llega a pFin entonce se actualiza el minimo.
+     * @param GrafoD grafo
+     * @param Arco arco: Pasa el arco entre el nodo actual y su sucesor
+     * @param int current: Numero de trasbordos en esa rama
+     * @param String CaminoActual: Va guardando el recorrido de la ruta
+     * @param visitados: Guarda cuales estaciones del metro ya han sido visitadas
+     */
 	static void BTRecursivo(GrafoDirigido grafo, Arco arco, int current, String caminoActual, boolean [] visitados) { 
 		// Declaracion de variables
 		Vertice inicio = arco.getExtremoInicial();
@@ -227,7 +288,7 @@ public class PlanearTrasbordos {
 		Set<Vertice> sucesores = grafo.sucesores(actual.getId());
 		
 		// Se actualiza el recorrido con la estacion y la linea actual
-		caminoActual += " " + lineasDeMetro[tipo] + " -> " + actual.getNombre() + " " + Integer.toString(actual.getId());
+		caminoActual += " " + lineasDeMetro[tipo] + " " + Integer.toString(actual.getId()) + " " + actual.getNombre();
 		String[] helper = caminoActual.split("\\s+");
 		
 		// Algunas condiciones que entorpecen el recorrido
@@ -236,9 +297,9 @@ public class PlanearTrasbordos {
 		// si llega al destino entonces acaba el backtracking y asigna los nuevos valores
 		if( actual.getId()==verticeFin.getId() && current < minimo) {
 			minimo = current;
-			caminoCompleto = caminoActual;
-			System.out.println(caminoCompleto);
-			System.out.println(minimo);
+			caminoCompleto = minimo + " " + caminoActual;
+			//System.out.println(caminoCompleto);
+			//System.out.println(minimo);
 			return;
 		}
 		// Se verifica primero si tiene algun adyacente en esa misma linea
@@ -277,7 +338,15 @@ public class PlanearTrasbordos {
 		return;
 	}
 
-	private static boolean InducirGrafo(String archivo1, GrafoNoDirigido grafoInducido) {
+	/**
+     * Lee cuales lineas de metro se conservaran, luego itera sobre los lados de una copia grafo completo y los que no sean de esas lineas
+     * son eliminados, por efectos practicos no se eliminan los nodos para evitar lanzar una excepcion en caso que el pInicio o pfin
+     * este en uno de ellos y se pueda usar el mismo algoritmo para el grafo y el grafo inducido. 
+     * @param Archivo1 Archivo con la informacion sobre que lineas se conservarn
+     * @param grafoInducido Es una grafo igual al grafo completo; al cual se le eliminaran la aristas que no sean de la lineas validas
+     * @return True si lee la informacion correctamente, falso si no
+     */
+	private static boolean inducirGrafo(String archivo1, GrafoNoDirigido grafoInducido) {
 		try {
 			// Leer las lineasDeMetro y contar cuantas lineas de metro hay
 	        BufferedReader Lector = new BufferedReader(new FileReader(archivo1));
@@ -304,40 +373,41 @@ public class PlanearTrasbordos {
 	 	        if(auxiliar) {
 	 	        	grafoInducido.eliminarArista(aux);
 	 	        }
-	        	
 	        }
-	        
-	        for(Vertice vertice: grafoInducido.vertices()) {
-	        //	if(grafoInducido.grado(vertice.getId())==0) grafoInducido.eliminarVertice(vertice.getId());
-	        }
-	        System.out.println(grafoInducido.numeroDeVertices());
-	        System.out.println(grafoInducido.numeroDeLados());
-	        
+	        //System.out.println(grafoInducido.numeroDeLados());
+	        //System.out.println(grafoInducido.numeroDeVertices());
 		} catch(Exception e) {
 			return false;
 		}
 		return true;
 	}
 	
+	/**
+     * Esta funcion busca los adyacentes del vertice pInicio, y llama a la funcion BTRecursivo sobre ellos, y marca el vertice inical 
+     * como visitado
+     * @param GrafoD grafo
+     * @param Vertice inicio
+     * @param Vertice Fin
+     * @return String caminoCompleto : Es el camino con todas las estaciones y lineas
+     */
 	private static String backtracking(GrafoNoDirigido grafo, Vertice inicio, Vertice fin) { 
 		// Declaracion de variables
 		Set<Vertice> adyacentes = grafo.adyacentes(verticeInicio.getId());
 		int current=0;
-		String caminoActual = inicio.getNombre();
+		String caminoActual = inicio.getId() + " "+ inicio.getNombre();
 		boolean [] visitados = new boolean [nroEstaciones];
 		visitados[hashing.get(verticeInicio.getId())] = true;
 		caminoCompleto = "-1";
 		
 		// Se itera sobre sobre los vecinos del nodo inicial
 		for(Vertice verticeAdj: adyacentes) {
-			System.out.println(verticeAdj.getNombre());
 			// Se busca cuales lines existen entre los nodos y se busca un camino entre ellos
 			for(int i=0; i<nroLineas; i++) {
 				if (grafo.estaArista(inicio, verticeAdj, i) && !visitados[hashing.get(verticeAdj.getId())]) {
 					Arista arista = new Arista(inicio, verticeAdj, i, 0);
 					arista = grafo.obtenerArista(inicio, verticeAdj, i);
 					visitados[hashing.get(verticeAdj.getId())] = true;
-					BTRecursivo((GrafoNoDirigido) grafo, arista, 0, caminoActual, visitados);
+					BTRecursivo((GrafoNoDirigido) grafo, inicio, arista, 0, caminoActual, visitados);
 					visitados[hashing.get(verticeAdj.getId())] = false;
 				}
 			}
@@ -345,18 +415,29 @@ public class PlanearTrasbordos {
 		return caminoCompleto;
 	}
 	
-	static void BTRecursivo(GrafoNoDirigido grafo, Arista arista, int current, String caminoActual, boolean [] visitados) { 
-		// Declaracion de variables
-		Vertice inicio = arista.getExtremo1();
-		Vertice actual = arista.getExtremo2();
+	/**
+     * Esta funcion recorre el grafo como lo recorreria el algoritmo DFS, primero busca todos los sucesores con la misma linea de metro,
+     * y ve por esa rama recursivamente, lleva una variable llamada current, si current es mayor o igual al minimo actual, entonces corta
+     * recursion pues buscamos el menor numero de trasbordos, si se llega a un punto donde no hay mas sucesores no visitados de la misma linea 
+     * entonces busca por las otras lineas, y se le suma 1 a current. Si se llega a pFin entonce se actualiza el minimo.
+     * @param GrafoD grafo
+     * @param Vertice inicio: Como el TAD no diferencia entre {u,v} y {v,u} pero para el recorrido importa, entonces le pasamos u
+     * @param Arco arco: Pasa el arco entre el nodo actual y su sucesor
+     * @param int current: Numero de trasbordos en esa rama
+     * @param String CaminoActual: Va guardando el recorrido de la ruta
+     * @param visitados: Guarda cuales estaciones del metro ya han sido visitadas
+    */
+	static void BTRecursivo(GrafoNoDirigido grafo, Vertice previo, Arista arista, int current, String caminoActual, boolean [] visitados) { 
+		//  Como el TAD no diferencia entre {u,v} y {v,u} buscamos cual es cuale
+		Vertice inicio = previo.getId() == arista.getExtremo1().getId() ? arista.getExtremo1() : arista.getExtremo2() ;
+		Vertice actual = previo.getId() == arista.getExtremo2().getId() ? arista.getExtremo1() : arista.getExtremo2() ;
 		int tipo = arista.getTipo();
 		
 		// Marista la estacion actual como visitada
 		visitados[hashing.get(actual.getId())] = true;
 		Set<Vertice> adyacentes = grafo.adyacentes(actual.getId());
 		
-		// Se actualiza el recorrido con la estacion y la linea actual
-		caminoActual += " " + lineasDeMetro[tipo] + " -> " + actual.getNombre() + " " + Integer.toString(actual.getId());
+		caminoActual += " " + lineasDeMetro[tipo] + " " + Integer.toString(actual.getId()) + " " + actual.getNombre();
 		String[] helper = caminoActual.split("\\s+");
 		
 		// Algunas condiciones que entorpecen el recorrido
@@ -365,9 +446,9 @@ public class PlanearTrasbordos {
 		// si llega al destino entonces acaba el backtracking y asigna los nuevos valores
 		if( actual.getId()==verticeFin.getId() && current < minimo) {
 			minimo = current;
-			caminoCompleto = caminoActual;
-			System.out.println(caminoCompleto);
-			System.out.println(minimo);
+			caminoCompleto = minimo + " " + caminoActual;
+			//System.out.println(caminoCompleto);
+			//System.out.println(minimo);
 			return;
 		}
 		// Se verifica primero si tiene algun adyacente en esa misma linea
@@ -377,7 +458,7 @@ public class PlanearTrasbordos {
 				visitados[hashing.get(verticeAdj.getId())] = true;
 				Arista aristaAux = new Arista(actual, verticeAdj, tipo, 0);
 				aristaAux = grafo.obtenerArista(actual, verticeAdj, tipo);
-				BTRecursivo((GrafoNoDirigido) grafo, aristaAux, current, caminoActual, visitados);
+				BTRecursivo((GrafoNoDirigido) grafo, actual, aristaAux, current, caminoActual, visitados);
 				// Se marca como falso para que no estorbe en los otros recorridos
 				visitados[hashing.get(verticeAdj.getId())] = false;
 				}
@@ -393,8 +474,7 @@ public class PlanearTrasbordos {
 					aristaAux = grafo.obtenerArista(actual, verticeAdj, i);
 					if(i==tipo)	{ // Do nothing :)
 					}else if(current+1<minimo) {
-						BTRecursivo((GrafoNoDirigido) grafo, aristaAux, current+1, caminoActual, visitados);
-						//visitados[hashing.get(masCercanox.getId())] = false;
+						BTRecursivo((GrafoNoDirigido) grafo, actual, aristaAux, current+1, caminoActual, visitados);
 					}
 					// Se marca como falso para que no estore en los otros recorridos
 					visitados[hashing.get(verticeAdj.getId())] = false;
