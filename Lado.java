@@ -71,7 +71,7 @@ public abstract class Lado
 	}
 	
 	/**
-	 * Obtiene una representaciÃ³n del lado de tipo String
+	 * Obtiene una representación del lado de tipo String
 	 * @return String representacion del lado
 	 */
 	abstract public String toString();

@@ -58,7 +58,7 @@ public class GrafoDirigido implements Grafo, Cloneable {
             int m = Integer.parseInt(Lector.readLine());
             
             for(int i = 0; i < n; i++) {
-                String[] helper = Lector.readLine().split("\\s");
+                String[] helper = Lector.readLine().split("\\s+");
                 
                 this.agregarVertice(
                     Integer.parseInt(helper[0]),
@@ -70,7 +70,7 @@ public class GrafoDirigido implements Grafo, Cloneable {
             }
             
             for(int i = 0; i < m; i++) {
-                String[] helper = Lector.readLine().split("\\s");
+                String[] helper = Lector.readLine().split("\\s+");
                 
                 this.agregarArco(
                     this.obtenerVertice(Integer.parseInt(helper[0])),
@@ -383,22 +383,24 @@ public class GrafoDirigido implements Grafo, Cloneable {
      * @return true en caso de exito, false en caso contrario
      */
     public boolean eliminarArco(Arco arco)
-    {
+    {	
+
+
         Vertice a = arco.getExtremoInicial();
         Vertice b = arco.getExtremoFinal();
         
         if(!this.estaArco(a, b, arco.getTipo())) {
             return false;
         }
-        
+
         this.grafo.get(a.getId()).getValue().get(b).remove(arco.getTipo());
-        this.grafo.get(b.getId()).getValue().get(a).remove(arco.getTipo());
-        
+        //this.grafo.get(b.getId()).getValue().get(a).remove(arco.getTipo());
+
         if (this.grafo.get(a.getId()).getValue().get(b).isEmpty()) {
             this.grafo.get(a.getId()).getValue().remove(b);
             //this.grafo.get(b.getId()).getValue().remove(a);
         }
-        
+
         this.numeroDeLados--;
         
         return true;

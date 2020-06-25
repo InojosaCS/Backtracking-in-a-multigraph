@@ -11,37 +11,34 @@ import java.io.*;
 
 public class CambiarTexto
 {   
-	
-    static void modifyFile(String filePath, String oldString, String newString)
+	/**
+     * Cambia los nombres de las ciudades en el archivo por el entero que las mapeas
+     * @param String filePath: El archivo a a cambiar
+     * @param String oldString
+     * @param String newString
+     */
+    static void modificarArchivo(String filePath, String oldString, String newString)
     {
         File fileToBeModified = new File(filePath);         
-        String oldContent = "";         
+        String oldContenido = "";         
         BufferedReader reader = null;         
         FileWriter writer = null;
          
         try
         {
             reader = new BufferedReader(new FileReader(fileToBeModified));
-             
-            //Reading all the lines of input text file into oldContent
-             
             String line = reader.readLine();
              
             while (line != null) 
             {
-                oldContent = oldContent + line + System.lineSeparator();
-                 
+                oldContenido = oldContenido + line + System.lineSeparator();       
                 line = reader.readLine();
             }
-             
-            //Replacing oldString with newString in the oldContent
-             
-            String newContent = oldContent.replaceAll(oldString, newString);
-             
-            //Rewriting the input text file with newContent
+            
+            String newContenido = oldContenido.replaceAll(oldString, newString);
              
             writer = new FileWriter(filePath); 
-            writer.write(newContent);
+            writer.write(newContenido);
             return;
         }
         catch (IOException e)
@@ -62,17 +59,21 @@ public class CambiarTexto
         }
     }
     
-    static void RecuperarArchivo(String filePath, String[] ciudades)
+    /**
+     * Revierte el mapep de las ciudades en el archivo
+     * @param String filePath
+     * @param String[] ciudades
+     */
+    static void recuperarArchivo(String filePath, String[] ciudades)
     {
         File fileToBeModified = new File(filePath);         
-        String oldContent = "";         
+        String oldContenido = "";         
         BufferedReader reader = null;         
         FileWriter writer = null;
          
         try
         {
             reader = new BufferedReader(new FileReader(fileToBeModified));
-    	
 			String line = reader.readLine();
             int k = 0;
             int n = 0;
@@ -83,23 +84,18 @@ public class CambiarTexto
             		n = Integer.parseInt(line);
             	}
             	if(k>n+2) {
-            		String[] helper = line.split("\\s");
-            		line = helper[0] + " " + helper[1] + " " + ciudades[Integer.parseInt(helper[2])] + " " + helper[3];
+            		String[] auxiliar = line.split("\\s+");
+            		line = auxiliar[0] + " " + auxiliar[1] + " " + ciudades[Integer.parseInt(auxiliar[2])] + " " + auxiliar[3];
             	}
-                oldContent = oldContent + line + System.lineSeparator();
+                oldContenido = oldContenido + line + System.lineSeparator();
                  
                 line = reader.readLine();
                 k++;
             }
              
-            //Replacing oldString with newString in the oldContent
-             
-            String newContent = oldContent;
-             
-            //Rewriting the input text file with newContent
-             
+            String newContenido = oldContenido;
             writer = new FileWriter(filePath); 
-            writer.write(newContent);
+            writer.write(newContenido);
             return;
         }
         catch (IOException e)
@@ -122,7 +118,6 @@ public class CambiarTexto
      
     public static void main(String[] args)
     {   
-    	
-        //modifyFile(args[0], "Digrafo.java", "epale"); 
+        //modificarArchivo(args[0], "Digrafo.java", "epale"); 
     }
 }

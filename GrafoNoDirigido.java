@@ -59,7 +59,7 @@ public class GrafoNoDirigido implements Grafo, Cloneable {
 			int m = Integer.parseInt(Lector.readLine());
 			
 			for(int i = 0; i < n; i++) {
-				String[] helper = Lector.readLine().split("\\s");
+				String[] helper = Lector.readLine().split("\\s+");
 				
 				this.agregarVertice(
 					Integer.parseInt(helper[0]),
@@ -71,7 +71,7 @@ public class GrafoNoDirigido implements Grafo, Cloneable {
 			}
 			
 			for(int i = 0; i < m; i++) {
-				String[] helper = Lector.readLine().split("\\s");
+				String[] helper = Lector.readLine().split("\\s+");
 				
 				this.agregarArista(
 					this.obtenerVertice(Integer.parseInt(helper[0])),
